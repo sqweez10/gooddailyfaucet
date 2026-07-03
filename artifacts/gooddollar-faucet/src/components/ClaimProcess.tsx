@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Wallet, ShieldCheck, Droplet, ExternalLink, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { useMiniPay } from "@/hooks/use-minipay";
 
 declare global {
   interface Window {
@@ -28,6 +29,7 @@ interface ClaimProcessProps {
 
 export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: ClaimProcessProps) {
   const [isConnecting, setIsConnecting] = [false, (_: boolean) => {}];
+  const { isMiniPay, address: miniPayAddress } = useMiniPay();
   const queryClient = useQueryClient();
 
   const {
@@ -74,6 +76,14 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
       });
     }
   }, []);
+
+  // MiniPay auto-connect: only fires when opened inside the MiniPay app.
+  // Regular browser/MetaMask users are unaffected since miniPayAddress stays null for them.
+  useEffect(() => {
+    if (miniPayAddress) {
+      setWalletAddress(miniPayAddress);
+    }
+  }, [miniPayAddress]);
 
   const connectWallet = async () => {
     if (!window.ethereum) {
@@ -145,9 +155,15 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
             <p className="text-sm text-muted-foreground mt-1">Connect your Celo-compatible wallet to begin.</p>
           </div>
           {step === 1 && (
-            <Button size="lg" className="mt-4 w-full sm:w-auto" onClick={connectWallet}>
-              <Wallet className="w-4 h-4 mr-2" /> Connect Wallet
-            </Button>
+            isMiniPay ? (
+              <div className="mt-4 flex items-center text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Connecting via MiniPay...
+              </div>
+            ) : (
+              <Button size="lg" className="mt-4 w-full sm:w-auto" onClick={connectWallet}>
+                <Wallet className="w-4 h-4 mr-2" /> Connect Wallet
+              </Button>
+            )
           )}
         </div>
 
@@ -258,4 +274,4 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
       </CardContent>
     </Card>
   );
-}
+        }
