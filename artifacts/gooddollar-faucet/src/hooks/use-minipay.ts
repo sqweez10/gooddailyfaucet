@@ -25,21 +25,21 @@ export function useMiniPay() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-const connectMiniPay = async () => {
-    if (!window.ethereum) {
+  const connectMiniPay = async () => {
+    if (typeof window === "undefined" || !window.ethereum) {
       setError("MiniPay wallet not found");
       return null;
     }
 
-  try {
+    try {
       setError(null);
       setIsConnecting(true);
 
-      const accounts = await window.ethereum.request({
+      const accounts = (await window.ethereum.request({
         method: "eth_requestAccounts",
-      });
+      })) as string[];
 
-  const account = accounts?.[0] ?? null;
+      const account = accounts?.[0] ?? null;
       setAddress(account);
 
       return account;
@@ -52,7 +52,7 @@ const connectMiniPay = async () => {
     }
   };
 
-useEffect(() => {
+  useEffect(() => {
     if (typeof window === "undefined") return;
 
     const detected = detectMiniPay();
@@ -62,9 +62,9 @@ useEffect(() => {
 
     const checkExistingConnection = async () => {
       try {
-        const accounts = await window.ethereum.request({
+        const accounts = (await window.ethereum.request({
           method: "eth_accounts",
-        });
+        })) as string[];
 
         if (accounts && accounts.length > 0) {
           setAddress(accounts[0]);
@@ -74,7 +74,7 @@ useEffect(() => {
       }
     };
 
-          const handleAccountsChanged = (accounts: string[]) => {
+    const handleAccountsChanged = (accounts: string[]) => {
       setAddress(accounts.length > 0 ? accounts[0] : null);
     };
 
@@ -93,7 +93,7 @@ useEffect(() => {
     };
   }, []);
 
-return {
+  return {
     isMiniPay,
     address,
     isConnecting,
