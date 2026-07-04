@@ -104,20 +104,24 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
     window.open("https://app.gooddollar.org/face-verification", "_blank");
   };
 
-  const handleClaim = () => {
-    if (!walletAddress) return;
-    claimTokens.mutate(
-      { data: { walletAddress, verificationProof: "verified", referralCode: referralCode ?? null } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetClaimStatusQueryKey(walletAddress) });
-          queryClient.invalidateQueries({ queryKey: getGetFaucetStatsQueryKey() });
-          queryClient.invalidateQueries({ queryKey: getGetRecentClaimsQueryKey() });
-        },
-      }
-    );
-  };
+  const handleClaim = async () => {
+  if (!walletAddress) return;
 
+  try {
+    setClaimError(null);
+    setIsClaimingOnchain(true);
+
+    const hash = await checkInToFaucet(walletAddress as `0x${string}`);
+
+    setClaimTxHash(hash);
+    console.log("Check-in tx:", hash);
+  } catch (err: any) {
+    console.error("Claim failed:", err);
+    setClaimError(err?.shortMessage || err?.message || "Claim failed");
+  } finally {
+    setIsClaimingOnchain(false);
+  }
+};
   const formatAddress = (address: string) =>
     `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
 
