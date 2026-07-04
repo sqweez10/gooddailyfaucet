@@ -12,7 +12,7 @@ function detectMiniPay() {
   const ethereum = window.ethereum;
   const userAgent = window.navigator.userAgent.toLowerCase();
 
-  return Boolean(
+return Boolean(
     ethereum?.isMiniPay ||
       userAgent.includes("minipay") ||
       userAgent.includes("opera")
@@ -35,7 +35,7 @@ export function useMiniPay() {
       setError(null);
       setIsConnecting(true);
 
-      const accounts = (await window.ethereum.request({
+const accounts = (await window.ethereum.request({
         method: "eth_requestAccounts",
       })) as string[];
 
@@ -52,7 +52,7 @@ export function useMiniPay() {
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
     if (typeof window === "undefined") return;
 
     const detected = detectMiniPay();
@@ -74,7 +74,7 @@ export function useMiniPay() {
       }
     };
 
-    const handleAccountsChanged = (accounts: string[]) => {
+const handleAccountsChanged = (accounts: string[]) => {
       setAddress(accounts.length > 0 ? accounts[0] : null);
     };
 
@@ -93,7 +93,7 @@ export function useMiniPay() {
     };
   }, []);
 
-  return {
+return {
     isMiniPay,
     address,
     isConnecting,
