@@ -1,5 +1,10 @@
-export const FAUCET_CONTRACT_ADDRESS =
-  "0x785f9B587f12a31F22FA5C5C324cd3F22c19e717" as const;
+const faucetAddress = import.meta.env.VITE_FAUCET_CONTRACT_ADDRESS;
+
+if (!faucetAddress) {
+  throw new Error("Missing VITE_FAUCET_CONTRACT_ADDRESS");
+}
+
+export const FAUCET_CONTRACT_ADDRESS = faucetAddress as `0x${string}`;
 
 export const FAUCET_ABI = [
   {
@@ -17,7 +22,7 @@ export const FAUCET_ABI = [
         type: "address",
       },
     ],
-name: "getUserStatus",
+    name: "getUserStatus",
     outputs: [
       {
         internalType: "uint32",
@@ -40,7 +45,7 @@ name: "getUserStatus",
         type: "uint256",
       },
       {
-internalType: "bool",
+        internalType: "bool",
         name: "canCheckInNow",
         type: "bool",
       },
