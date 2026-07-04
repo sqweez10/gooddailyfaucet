@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   useGetClaimStatus,
   useCheckVerificationStatus,
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Wallet, ShieldCheck, Droplet, ExternalLink, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useMiniPay } from "@/hooks/use-minipay";
+import { checkInToFaucet } from "@/lib/celoFaucet";
 
 declare global {
   interface Window {
@@ -28,7 +29,11 @@ interface ClaimProcessProps {
 }
 
 export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: ClaimProcessProps) {
-  const [isConnecting, setIsConnecting] = [false, (_: boolean) => {}];
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [claimTxHash, setClaimTxHash] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
+  const [isClaimingOnchain, setIsClaimingOnchain] = useState(false);
+  
   const { isMiniPay, address: miniPayAddress } = useMiniPay();
   const queryClient = useQueryClient();
 
@@ -77,8 +82,6 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
     }
   }, []);
 
-  // MiniPay auto-connect: only fires when opened inside the MiniPay app.
-  // Regular browser/MetaMask users are unaffected since miniPayAddress stays null for them.
   useEffect(() => {
     if (miniPayAddress) {
       setWalletAddress(miniPayAddress);
@@ -105,23 +108,24 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
   };
 
   const handleClaim = async () => {
-  if (!walletAddress) return;
+    if (!walletAddress) return;
 
-  try {
-    setClaimError(null);
-    setIsClaimingOnchain(true);
+    try {
+      setClaimError(null);
+      setIsClaimingOnchain(true);
 
-    const hash = await checkInToFaucet(walletAddress as `0x${string}`);
+      const hash = await checkInToFaucet(walletAddress as `0x${string}`);
 
-    setClaimTxHash(hash);
-    console.log("Check-in tx:", hash);
-  } catch (err: any) {
-    console.error("Claim failed:", err);
-    setClaimError(err?.shortMessage || err?.message || "Claim failed");
-  } finally {
-    setIsClaimingOnchain(false);
-  }
-};
+      setClaimTxHash(hash);
+      console.log("Check-in tx:", hash);
+    } catch (err: any) {
+      console.error("Claim failed:", err);
+      setClaimError(err?.shortMessage || err?.message || "Claim failed");
+    } finally {
+      setIsClaimingOnchain(false);
+    }
+  };
+
   const formatAddress = (address: string) =>
     `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
 
@@ -226,25 +230,35 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
           </div>
           {step === 3 && (
             <div className="mt-4">
-              {claimTokens.error && (
+              {claimError && (
                 <Alert variant="destructive" className="mb-4">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Claim Failed</AlertTitle>
-                  <AlertDescription>{claimTokens.error.message || "An error occurred during claiming."}</AlertDescription>
+                  <AlertDescription>{claimError}</AlertDescription>
                 </Alert>
               )}
               <Button
                 size="lg"
                 className="w-full sm:w-auto"
                 onClick={handleClaim}
-                disabled={claimTokens.isPending || isLoadingStatus}
+                disabled={isClaimingOnchain || isLoadingStatus}
               >
-                {claimTokens.isPending ? (
+                {isClaimingOnchain ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
                 ) : (
                   <><Droplet className="w-4 h-4 mr-2" /> Claim Free G$</>
                 )}
               </Button>
+              {claimTxHash && (
+                <a
+                  href={`https://celoscan.io/tx/${claimTxHash}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm text-green-600 mt-3 inline-flex items-center hover:underline"
+                >
+                  View transaction on Celoscan <ExternalLink className="w-3 h-3 ml-1" />
+                </a>
+              )}
             </div>
           )}
 
@@ -278,4 +292,4 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
       </CardContent>
     </Card>
   );
-        }
+}
