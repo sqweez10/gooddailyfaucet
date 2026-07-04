@@ -2,13 +2,9 @@ import { useEffect, useState } from "react";
 import {
   useGetClaimStatus,
   useCheckVerificationStatus,
-  useClaimTokens,
   getGetClaimStatusQueryKey,
   getCheckVerificationStatusQueryKey,
-  getGetFaucetStatsQueryKey,
-  getGetRecentClaimsQueryKey,
 } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -35,7 +31,6 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
   const [isClaimingOnchain, setIsClaimingOnchain] = useState(false);
   
   const { isMiniPay, address: miniPayAddress } = useMiniPay();
-  const queryClient = useQueryClient();
 
   const {
     data: claimStatus,
@@ -58,8 +53,6 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
     },
   });
 
-  const claimTokens = useClaimTokens();
-
   useEffect(() => {
     const checkConnection = async () => {
       if (typeof window !== "undefined" && window.ethereum) {
@@ -73,20 +66,31 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
         }
       }
     };
+
+    const handleAccountsChanged = (accounts: string[]) => {
+      setWalletAddress(accounts.length > 0 ? accounts[0] : null);
+      setClaimTxHash(null);
+      setClaimError(null);
+    };
+
     checkConnection();
 
-    if (window.ethereum) {
-      window.ethereum.on("accountsChanged", (accounts: string[]) => {
-        setWalletAddress(accounts.length > 0 ? accounts[0] : null);
-      });
+    if (window.ethereum?.on) {
+      window.ethereum.on("accountsChanged", handleAccountsChanged);
     }
-  }, []);
+
+    return () => {
+      if (window.ethereum?.removeListener) {
+        window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
+      }
+    };
+  }, [setWalletAddress]);
 
   useEffect(() => {
     if (miniPayAddress) {
       setWalletAddress(miniPayAddress);
     }
-  }, [miniPayAddress]);
+  }, [miniPayAddress, setWalletAddress]);
 
   const connectWallet = async () => {
     if (!window.ethereum) {
@@ -94,12 +98,15 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
       return;
     }
     try {
+      setIsConnecting(true);
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       if (accounts && accounts.length > 0) {
         setWalletAddress(accounts[0]);
       }
     } catch (err) {
       console.error("Failed to connect wallet", err);
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -129,7 +136,13 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
   const formatAddress = (address: string) =>
     `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
 
-  const step = !walletAddress ? 1 : verificationStatus?.isVerified === false ? 2 : claimStatus?.hasClaimed === true ? 4 : 3;
+  const step = !walletAddress 
+    ? 1 
+    : verificationStatus?.isVerified === false 
+      ? 2 
+      : claimTxHash || claimStatus?.hasClaimed === true 
+        ? 4 
+        : 3;
 
   return (
     <Card className="w-full shadow-lg border-primary/10">
@@ -168,8 +181,12 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Connecting via MiniPay...
               </div>
             ) : (
-              <Button size="lg" className="mt-4 w-full sm:w-auto" onClick={connectWallet}>
-                <Wallet className="w-4 h-4 mr-2" /> Connect Wallet
+              <Button size="lg" className="mt-4 w-full sm:w-auto" onClick={connectWallet} disabled={isConnecting}>
+                {isConnecting ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Connecting...</>
+                ) : (
+                  <><Wallet className="w-4 h-4 mr-2" /> Connect Wallet</>
+                )}
               </Button>
             )
           )}
@@ -262,18 +279,18 @@ export function ClaimProcess({ walletAddress, setWalletAddress, referralCode }: 
             </div>
           )}
 
-          {step === 4 && claimStatus?.hasClaimed && (
+          {step === 4 && (claimTxHash || claimStatus?.hasClaimed) && (
             <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg">
               <div className="flex items-start">
                 <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-500 mt-0.5 mr-3 shrink-0" />
                 <div>
                   <h4 className="font-semibold text-green-800 dark:text-green-400">Successfully Claimed!</h4>
                   <p className="text-sm text-green-700 dark:text-green-500/80 mt-1">
-                    You received {claimStatus.amount} G$ tokens.
+                    You received your daily G$ reward.
                   </p>
-                  {claimStatus.txHash && (
+                  {(claimTxHash || claimStatus?.txHash) && (
                     <a
-                      href={`https://celoscan.io/tx/${claimStatus.txHash}`}
+                      href={`https://celoscan.io/tx/${claimTxHash || claimStatus?.txHash}`}
                       target="_blank"
                       rel="noreferrer"
                       className="text-xs font-medium text-green-700 dark:text-green-400 mt-2 inline-flex items-center hover:underline"
