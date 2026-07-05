@@ -4,7 +4,6 @@ import { ClaimProcess } from "@/components/ClaimProcess";
 import { DailyCheckin } from "@/components/DailyCheckin";
 import { Leaderboard } from "@/components/Leaderboard";
 import { ReferralPanel } from "@/components/ReferralPanel";
-import { Droplet } from "lucide-react";
 
 export default function Home() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -29,10 +28,12 @@ export default function Home() {
       <header className="relative z-10 w-full border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-              <Droplet className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg tracking-tight">G$ Faucet</span>
+            <img
+              src="/logo.png"
+              alt="GoodDailyFaucet logo"
+              className="w-8 h-8 rounded-full object-cover"
+            />
+            <span className="font-bold text-lg tracking-tight">GoodDailyFaucet</span>
           </div>
           <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
