@@ -35,7 +35,7 @@ export async function switchToCelo() {
     blockExplorerUrls: ["https://celoscan.io"],
   };
 
-try {
+  try {
     const currentChainId = await window.ethereum.request({
       method: "eth_chainId",
     });
@@ -44,17 +44,17 @@ try {
       return;
     }
   } catch {
-    // บาง wallet อาจไม่รองรับ eth_chainId ก็ปล่อยให้ลอง switch ต่อ
+    // บาง wallet อาจไม่รองรับ eth_chainId ก็ไม่เป็นไร
   }
 
-try {
+  try {
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: celoChainId }],
     });
   } catch (switchError: any) {
-    // MiniPay บางเวอร์ชันไม่รองรับ wallet_switchEthereumChain
-    // ถ้าเป็น MiniPay ให้ข้าม เพราะ MiniPay ใช้ Celo อยู่แล้ว
+    // MiniPay ไม่รองรับ wallet_switchEthereumChain
+    // ถ้าเจอ -32601 ให้ข้าม เพราะ MiniPay อยู่บน Celo อยู่แล้ว
     if (
       switchError?.code === -32601 ||
       switchError?.message?.includes("wallet_switchEthereumChain")
@@ -68,7 +68,7 @@ try {
         params: [celoChain],
       });
 
-await window.ethereum.request({
+      await window.ethereum.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: celoChainId }],
       });
