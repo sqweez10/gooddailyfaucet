@@ -13,36 +13,41 @@ import {
 
 export const celoPublicClient = createPublicClient({
   chain: celo,
-  transport: http(),
+  transport: http("https://forno.celo.org"),
 });
 
 export async function switchToCelo() {
-  if (!window.ethereum) {
+  if (typeof window === "undefined" || !window.ethereum) {
     throw new Error("Wallet not found");
   }
+
+  const celoChain = {
+    chainId: "0xa4ec", // 42220
+    chainName: "Celo Mainnet",
+    nativeCurrency: {
+      name: "CELO",
+      symbol: "CELO",
+      decimals: 18,
+    },
+    rpcUrls: ["https://forno.celo.org"],
+    blockExplorerUrls: ["https://celoscan.io"],
+  };
 
   try {
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
-      params: [{ chainId: "0xa4ec" }], // 42220
+      params: [{ chainId: celoChain.chainId }],
     });
   } catch (switchError: any) {
     if (switchError?.code === 4902) {
       await window.ethereum.request({
         method: "wallet_addEthereumChain",
-        params: [
-          {
-            chainId: "0xa4ec",
-            chainName: "Celo",
-            nativeCurrency: {
-              name: "CELO",
-              symbol: "CELO",
-              decimals: 18,
-            },
-            rpcUrls: ["https://forno.celo.org"],
-            blockExplorerUrls: ["https://celoscan.io"],
-          },
-        ],
+        params: [celoChain],
+      });
+
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: celoChain.chainId }],
       });
     } else {
       throw switchError;
@@ -70,7 +75,7 @@ export async function getFaucetPoolBalance() {
 }
 
 export async function checkInToFaucet(walletAddress: `0x${string}`) {
-  if (!window.ethereum) {
+  if (typeof window === "undefined" || !window.ethereum) {
     throw new Error("Wallet not found");
   }
 
@@ -81,10 +86,20 @@ export async function checkInToFaucet(walletAddress: `0x${string}`) {
     transport: custom(window.ethereum),
   });
 
-  return walletClient.writeContract({
+  const hash = await walletClient.writeContract({
     address: FAUCET_CONTRACT_ADDRESS,
     abi: FAUCET_ABI,
     functionName: "checkIn",
     account: walletAddress,
   });
+
+  const receipt = await celoPublicClient.waitForTransactionReceipt({
+    hash,
+  });
+
+  if (receipt.status !== "success") {
+    throw new Error("Transaction failed");
+  }
+
+  return hash;
 }
