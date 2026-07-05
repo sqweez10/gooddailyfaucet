@@ -9,7 +9,7 @@ import { celo } from "viem/chains";
 import {
   FAUCET_ABI,
   FAUCET_CONTRACT_ADDRESS,
-} from "@[/lib](https://farcaster.xyz/~/channel/lib)/faucetContract";
+} from "@/lib/faucetContract";
 
 export const celoPublicClient = createPublicClient({
   chain: celo,
