@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { FaucetStats, RecentClaims } from "@/components/FaucetStats";
 import { ClaimProcess } from "@/components/ClaimProcess";
 import { DailyCheckin } from "@/components/DailyCheckin";
 import { Leaderboard } from "@/components/Leaderboard";
@@ -64,11 +63,6 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Top Stats */}
-        <div className="mb-12">
-          <FaucetStats />
-        </div>
-
         {/* Main grid */}
         <div className="grid lg:grid-cols-12 gap-8 items-start">
 
@@ -82,11 +76,10 @@ export default function Home() {
             <DailyCheckin walletAddress={walletAddress} />
           </div>
 
-          {/* Right: Referral + Recent Claims + Leaderboard */}
+          {/* Right: Referral + Leaderboard */}
           <div className="lg:col-span-5 space-y-6">
             <div className="sticky top-24 space-y-6">
               <ReferralPanel walletAddress={walletAddress} />
-              <RecentClaims />
               <Leaderboard />
             </div>
           </div>
