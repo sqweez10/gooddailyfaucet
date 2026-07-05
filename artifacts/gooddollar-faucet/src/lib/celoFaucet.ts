@@ -21,8 +21,10 @@ export async function switchToCelo() {
     throw new Error("Wallet not found");
   }
 
+  const celoChainId = "0xa4ec"; // 42220
+
   const celoChain = {
-    chainId: "0xa4ec", // 42220
+    chainId: celoChainId,
     chainName: "Celo Mainnet",
     nativeCurrency: {
       name: "CELO",
@@ -33,25 +35,48 @@ export async function switchToCelo() {
     blockExplorerUrls: ["https://celoscan.io"],
   };
 
-  try {
+try {
+    const currentChainId = await window.ethereum.request({
+      method: "eth_chainId",
+    });
+
+    if (currentChainId === celoChainId) {
+      return;
+    }
+  } catch {
+    // บาง wallet อาจไม่รองรับ eth_chainId ก็ปล่อยให้ลอง switch ต่อ
+  }
+
+try {
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
-      params: [{ chainId: celoChain.chainId }],
+      params: [{ chainId: celoChainId }],
     });
   } catch (switchError: any) {
+    // MiniPay บางเวอร์ชันไม่รองรับ wallet_switchEthereumChain
+    // ถ้าเป็น MiniPay ให้ข้าม เพราะ MiniPay ใช้ Celo อยู่แล้ว
+    if (
+      switchError?.code === -32601 ||
+      switchError?.message?.includes("wallet_switchEthereumChain")
+    ) {
+      return;
+    }
+
     if (switchError?.code === 4902) {
       await window.ethereum.request({
         method: "wallet_addEthereumChain",
         params: [celoChain],
       });
 
-      await window.ethereum.request({
+await window.ethereum.request({
         method: "wallet_switchEthereumChain",
-        params: [{ chainId: celoChain.chainId }],
+        params: [{ chainId: celoChainId }],
       });
-    } else {
-      throw switchError;
+
+      return;
     }
+
+    throw switchError;
   }
 }
 
