@@ -30,4 +30,4 @@ We have implemented an Infinite Milestone Loop system to reward consistent users
 ## 💡 Development Context
 This tool reflects a commitment to building sustainable community engagement, combining experience from previous SocialFi initiatives (such as the TYSM daily faucet) with the specific requirements of the GoodDollar ecosystem.
 
-## Developed with 🔥 by tops87sqweezz.base.eth
+## Developer with 🔥 by tops87sqweezz.bash.eth
