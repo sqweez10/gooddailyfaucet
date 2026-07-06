@@ -12,7 +12,7 @@ We have implemented an Infinite Milestone Loop system to reward consistent users
 * **Cycle 3+ (Day 61+):** +700 G$
 
 ### Milestone Bonus
-| Milestone (Day) | Cycle 1 | Cycle 2 (×2) | Cycle 3+ (×2.5) |
+| Milestone (Day) | Cycle 1 | Cycle 2 (×2) | Cycle 3+ (×5) |
 | :--- | :--- | :--- | :--- |
 | **Day 3** | +300 G$ | +600 G$ | +1,500 G$ |
 | **Day 7** | +700 G$ | +1,400 G$ | +3,500 G$ |
